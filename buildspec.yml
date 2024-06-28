@@ -24,6 +24,6 @@ phases:
       - echo Tag in progress...
       - docker tag django-image:latest public.ecr.aws/d5n5m2p7/django-image:latest
       - echo Pusing the Docker image...
-      - docker push public.ecr.aws/d5n5m2p7/django-image:$COMMIT_HASH
+      - docker push public.ecr.aws/d5n5m2p7/django-image:latest
 # artifacts:
 #   files: imagedefinitions.json
