@@ -1,0 +1,32 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/d5n5m2p7
+
+      - export COMMIT_HASH=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo $COMMIT_HASH
+
+      - echo Retrieving secrets from AWS Secrets Manager...
+
+      - export DJANGO_SUPERUSER_USERNAME=$(aws secretsmanager get-secret-value --secret-id my-django-app-superuser --query 'SecretString' --output text | jq -r '.DJANGO_SUPERUSER_USERNAME')
+      - export DJANGO_SUPERUSER_EMAIL=$(aws secretsmanager get-secret-value --secret-id my-django-app-superuser --query 'SecretString' --output text | jq -r '.DJANGO_SUPERUSER_EMAIL')
+      - export DJANGO_SUPERUSER_PASSWORD=$(aws secretsmanager get-secret-value --secret-id my-django-app-superuser --query 'SecretString' --output text | jq -r '.DJANGO_SUPERUSER_PASSWORD')
+      
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t django-image .
+
+  post_build:
+     commands:
+      - echo Tag in progress...
+      - docker tag django-image:latest public.ecr.aws/d5n5m2p7/django-image:$COMMIT_HASH
+      - echo Pusing the Docker image...
+      - docker push public.ecr.aws/d5n5m2p7/django-image:$COMMIT_HASH
+# artifacts:
+#   files: imagedefinitions.json
