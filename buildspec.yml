@@ -15,21 +15,21 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t django-image:latest .
 
   post_build:
     commands:
       - echo Tagging in progress...
-      - docker tag django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION public.ecr.aws/d5n5m2p7/django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker tag django-image:latest public.ecr.aws/d5n5m2p7/django-image:latest
       - echo Running tests...
-      - docker run django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION python manage.py test
+      - docker run django-image:latest python manage.py test
       - echo Pushing the Docker image...
-      - docker push public.ecr.aws/d5n5m2p7/django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push public.ecr.aws/d5n5m2p7/django-image:latest
       - echo Updating ECS service...
       - ECS_CLUSTER_NAME="ideahub-backend2"
       - ECS_SERVICE_NAME="ideahub-django-service"
       - TASK_FAMILY="ideahub-django-task"
-      - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - IMAGE_TAG=latest
       - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY)
       - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE_TAG "$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = "public.ecr.aws/d5n5m2p7/django-image:" + $IMAGE_TAG | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
       - REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
