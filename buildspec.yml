@@ -24,14 +24,10 @@ phases:
       - echo Running tests...
       - docker run django-image:latest python manage.py test
       - echo Pushing the Docker image...
-      - docker push public.ecr.aws/d5n5m2p7/django-image:latest
-      - echo Updating ECS service...
-      - ECS_CLUSTER_NAME="ideahub-backend2"
-      - ECS_SERVICE_NAME="ideahub-django-service"
-      - TASK_FAMILY="ideahub-django-task"
-      - IMAGE_TAG=latest
-      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY)
-      - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE_TAG "$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = "public.ecr.aws/d5n5m2p7/django-image:" + $IMAGE_TAG | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
-      - REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
-      - NEW_REVISION=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
-      - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition $NEW_REVISION
+      - docker push public.ecr.aws/d5n5m2p7/django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo Creating imagedefinitions.json file...
+      - echo '[{"name":"container-name","imageUri":"public.ecr.aws/d5n5m2p7/django-image:'$CODEBUILD_RESOLVED_SOURCE_VERSION'"}]' > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
