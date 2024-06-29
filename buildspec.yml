@@ -24,9 +24,9 @@ phases:
       - echo Running tests...
       - docker run django-image:latest python manage.py test
       - echo Pushing the Docker image...
-      - docker push public.ecr.aws/d5n5m2p7/django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push public.ecr.aws/d5n5m2p7/django-image:$latest
       - echo Creating imagedefinitions.json file...
-      - echo '[{"name":"container-name","imageUri":"public.ecr.aws/d5n5m2p7/django-image:'$CODEBUILD_RESOLVED_SOURCE_VERSION'"}]' > imagedefinitions.json
+      - echo '[{"name":"container-name","imageUri":"public.ecr.aws/d5n5m2p7/django-image:'$latest'"}]' > imagedefinitions.json
 
 artifacts:
   files:
