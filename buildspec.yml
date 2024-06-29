@@ -6,9 +6,7 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws --version
       - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/d5n5m2p7
-
       - echo Retrieving secrets from AWS Secrets Manager...
-
       - export DJANGO_SUPERUSER_USERNAME=$(aws secretsmanager get-secret-value --secret-id my-django-app-superuser --query 'SecretString' --output text | jq -r '.DJANGO_SUPERUSER_USERNAME')
       - export DJANGO_SUPERUSER_EMAIL=$(aws secretsmanager get-secret-value --secret-id my-django-app-superuser --query 'SecretString' --output text | jq -r '.DJANGO_SUPERUSER_EMAIL')
       - export DJANGO_SUPERUSER_PASSWORD=$(aws secretsmanager get-secret-value --secret-id my-django-app-superuser --query 'SecretString' --output text | jq -r '.DJANGO_SUPERUSER_PASSWORD')
@@ -17,13 +15,23 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t django-image .
+      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION .
 
   post_build:
-     commands:
-      - echo Tag in progress...
-      - docker tag django-image:latest public.ecr.aws/d5n5m2p7/django-image:latest
-      - echo Pusing the Docker image...
-      - docker push public.ecr.aws/d5n5m2p7/django-image:latest
-# artifacts:
-#   files: imagedefinitions.json
+    commands:
+      - echo Tagging in progress...
+      - docker tag django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION public.ecr.aws/d5n5m2p7/django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo Running tests...
+      - docker run django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION python manage.py test
+      - echo Pushing the Docker image...
+      - docker push public.ecr.aws/d5n5m2p7/django-image:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo Updating ECS service...
+      - ECS_CLUSTER_NAME="ideahub-backend2"
+      - ECS_SERVICE_NAME="ideahub-django-service"
+      - TASK_FAMILY="ideahub-django-task"
+      - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY)
+      - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE_TAG "$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = "public.ecr.aws/d5n5m2p7/django-image:" + $IMAGE_TAG | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+      - REGISTERED_TASK_DEFINITION=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION")
+      - NEW_REVISION=$(echo $REGISTERED_TASK_DEFINITION | jq -r '.taskDefinition.taskDefinitionArn')
+      - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition $NEW_REVISION
