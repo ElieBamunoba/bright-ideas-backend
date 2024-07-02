@@ -27,9 +27,8 @@ phases:
       - docker run django-image:latest python manage.py test
       - echo Pusing the Docker image...
       - docker push public.ecr.aws/d5n5m2p7/django-image:latest
-      - echo Creating imagedefinitions.json file...
-      - echo '[{"name":"container-name","imageUri":"public.ecr.aws/d5n5m2p7/django-image:'$latest'"}]' > imagedefinitions.json
 
-artifacts:
-  files:
-    - imagedefinitions.json
+
+# artifacts:
+#   files:
+#     - imagedefinitions.json
