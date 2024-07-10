@@ -5,7 +5,7 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/d5n5m2p7
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 925413096657.dkr.ecr.ap-south-1.amazonaws.com
 
       - echo Retrieving secrets from AWS Secrets Manager...
 
@@ -17,16 +17,16 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t django-image .
+      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD t ideahub-image .
 
   post_build:
      commands:
       - echo Tagging in progress...
-      - docker tag django-image:latest public.ecr.aws/d5n5m2p7/django-image:latest
+      - docker tag ideahub-image:latest 925413096657.dkr.ecr.ap-south-1.amazonaws.com/ideahub-image:latest
       - echo Running tests...
       - docker run django-image:latest python manage.py test
       - echo Pusing the Docker image...
-      - docker push public.ecr.aws/d5n5m2p7/django-image:latest
+      - docker push 925413096657.dkr.ecr.ap-south-1.amazonaws.com/ideahub-image:latest
 
 
 # artifacts:
