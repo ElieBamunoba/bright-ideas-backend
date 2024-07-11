@@ -17,7 +17,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD t ideahub-image .
+      - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t ideahub-image .
 
   post_build:
      commands:
