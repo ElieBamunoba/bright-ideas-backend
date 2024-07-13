@@ -11,12 +11,17 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 import environ
+import pymysql
 
 # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env()  
+env.read_env(os.path.join(os.path.dirname(
+    os.path.abspath(__file__)), ".env_local"))
 
+pymysql.version_info = (1, 4, 3, "final", 0)
+pymysql.install_as_MySQLdb()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
