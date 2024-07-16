@@ -6,14 +6,14 @@ env:
     DOCKERHUB_ACCESS_TOKEN: "/cicd/dockerhub:token"
   variables:
     AWS_REGION: "ap-south-1"
-    ECR_IDEAHUB_REPO: "827539382247.dkr.ecr.ap-south-1.amazonaws.com/ideahub-django-api"
+    ECR_IDEAHUB_REPO: "925413096657.dkr.ecr.ap-south-1.amazonaws.com/ideahub-image"
     
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 925413096657.dkr.ecr.ap-south-1.amazonaws.com
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_IDEAHUB_REPO
       - echo "Logging in to Docker Hub"
       - echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin 
       - echo Retrieving secrets from AWS Secrets Manager...
@@ -28,15 +28,14 @@ phases:
       - docker build --build-arg DJANGO_SUPERUSER_USERNAME --build-arg DJANGO_SUPERUSER_EMAIL --build-arg DJANGO_SUPERUSER_PASSWORD -t ideahub-image .
 
   post_build:
-     commands:
+    commands:
       - echo Tagging in progress...
-      - docker tag ideahub-image:latest 925413096657.dkr.ecr.ap-south-1.amazonaws.com/ideahub-image:latest
-      # - echo Running tests...
-      # - docker run ideahub-image:latest python manage.py test
-      - echo Pusing the Docker image...
-      - docker push 925413096657.dkr.ecr.ap-south-1.amazonaws.com/ideahub-image:latest
-
+      - docker tag ideahub-image:latest $ECR_IDEAHUB_REPO:latest
+      - echo Pushing the Docker image...
+      - docker push $ECR_IDEAHUB_REPO:latest
+      - echo Writing image definitions file...
+      - printf '[{"name":"ideahub-django-container","imageUri":"%s"}]' $ECR_IDEAHUB_REPO:latest > imagedefinitions.json
 
 artifacts:
   files:
-    - '**/*'
+    - imagedefinitions.json
