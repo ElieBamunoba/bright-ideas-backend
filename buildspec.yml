@@ -37,6 +37,6 @@ phases:
       - docker push 925413096657.dkr.ecr.ap-south-1.amazonaws.com/ideahub-image:latest
 
 
-# artifacts:
-#   files:
-#     - imagedefinitions.json
+artifacts:
+  files:
+    - '**/*'
